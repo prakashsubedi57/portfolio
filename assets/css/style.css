@@ -723,12 +723,12 @@ main {
 
 
 /**
- * #clients 
+ * #stacks 
  */
 
-.clients { margin-bottom: 15px; }
+.stacks { margin-bottom: 15px; }
 
-.clients-list {
+.stacks-list {
   display: flex;
   justify-content: flex-start;
   align-items: flex-start;
@@ -743,18 +743,19 @@ main {
   scroll-padding-inline: 25px;
 }
 
-.clients-item {
+.stacks-item {
   min-width: 50%;
   scroll-snap-align: start;
 }
 
-.clients-item img {
+.stacks-item img {
   width: 100%;
   filter: grayscale(1);
   transition: var(--transition-1);
+  background-color: #3b97c5;
 }
 
-.clients-item img:hover { filter: grayscale(0); }
+.stacks-item img:hover { filter: grayscale(0); }
 
 
 
@@ -1222,6 +1223,65 @@ textarea.form-input::-webkit-resizer { display: none; }
 .form-btn:disabled:hover::before { background: var(--bg-gradient-jet); }
 
 
+.contact-card {
+  /* background: var(--light-gray, #1a1a1a); */
+  padding: 20px;
+  border-radius: 12px;
+  margin-top: 20px;
+  box-shadow: var(--shadow-2, 0 4px 10px rgba(0,0,0,0.2));
+}
+
+.contact-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.contact-icon {
+  font-size: 28px;
+  color: var(--orange-yellow-crayola, #fbb034);
+}
+
+.contact-label {
+  font-size: 14px;
+  opacity: 0.7;
+  margin: 0;
+  color: #ffff;
+}
+
+.contact-value {
+  margin: 0;
+  font-weight: 500;
+  color: #fff;
+}
+
+.contact-value a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.contact-value a:hover {
+  text-decoration: underline;
+}
+
+.contact-whatsapp {
+  margin-top: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #25D366;
+  padding: 10px 16px;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  transition: 0.2s ease;
+}
+
+.contact-whatsapp:hover {
+  background: #1ebe5b;
+}
 
 
 
@@ -1239,7 +1299,7 @@ textarea.form-input::-webkit-resizer { display: none; }
    * client
    */
 
-  .clients-item { min-width: calc(33.33% - 10px); }
+  .stacks-item { min-width: calc(33.33% - 10px); }
 
 
 
@@ -1471,16 +1531,16 @@ textarea.form-input::-webkit-resizer { display: none; }
     width: 35px;
   }
 
-  /* clients */
+  /* stacks */
 
-  .clients-list {
+  .stacks-list {
     gap: 50px;
     margin: 0 -30px;
     padding: 45px;
     scroll-padding-inline: 45px;
   }
 
-  .clients-item { min-width: calc(33.33% - 35px); }
+  .stacks-item { min-width: calc(33.33% - 35px); }
 
 
 
@@ -1734,9 +1794,9 @@ textarea.form-input::-webkit-resizer { display: none; }
 
   .testimonials-item { min-width: calc(50% - 15px); }
 
-  /* clients */
+  /* stacks */
 
-  .clients-item { min-width: calc(25% - 38px); }
+  .stacks-item { min-width: calc(25% - 38px); }
 
 
 
