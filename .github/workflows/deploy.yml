@@ -22,18 +22,3 @@
             port: ${{ secrets.PORT }}
             source: "."
             target: "~/domains/subediprakash.com/public_html"
-
-        - name: Run Laravel Commands
-          uses: appleboy/ssh-action@v1.2.0
-          with:
-            host: ${{ secrets.HOST }}
-            username: ${{ secrets.USERNAME }}
-            key: ${{ secrets.SSH_PRIVATE_KEY }}
-            port: ${{ secrets.PORT }}
-            script: |
-              cd ~/domains/subediprakash.com/public_html
-
-              composer install --no-dev --optimize-autoloader
-
-              php artisan optimize:clear
-              php artisan optimize
