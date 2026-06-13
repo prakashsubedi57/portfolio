@@ -1,0 +1,39 @@
+  name: Deploy Balapushpika to Production
+
+  on:
+    push:
+      branches:
+        - main
+
+  jobs:
+    deploy:
+      runs-on: ubuntu-latest
+
+      steps:
+        - name: Checkout Repo
+          uses: actions/checkout@v4
+
+        - name: Copy Files via SSH
+          uses: appleboy/scp-action@v0.1.7
+          with:
+            host: ${{ secrets.HOST }}
+            username: ${{ secrets.USERNAME }}
+            key: ${{ secrets.SSH_PRIVATE_KEY }}
+            port: ${{ secrets.PORT }}
+            source: "."
+            target: "~/domains/subediprakash.com/public_html"
+
+        - name: Run Laravel Commands
+          uses: appleboy/ssh-action@v1.2.0
+          with:
+            host: ${{ secrets.HOST }}
+            username: ${{ secrets.USERNAME }}
+            key: ${{ secrets.SSH_PRIVATE_KEY }}
+            port: ${{ secrets.PORT }}
+            script: |
+              cd ~/domains/subediprakash.com/public_html
+
+              composer install --no-dev --optimize-autoloader
+
+              php artisan optimize:clear
+              php artisan optimize
