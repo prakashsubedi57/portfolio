@@ -1,0 +1,9 @@
+User-agent: *
+
+Allow: /
+
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /login
+
+Sitemap: https://subediprakash.com/sitemap.xml
