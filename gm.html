@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Good Morning Scratch Card</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:100%; height:100%; }
+  body{
+    font-family: Georgia, serif;
+    background: linear-gradient(180deg, #1a2340 0%, #2d3a63 60%, #3a4a7a 100%);
+    display:flex; justify-content:center; align-items:center;
+    overflow:hidden;
+    touch-action: none;
+  }
+
+  .card-wrap{
+    position:relative;
+    width: min(360px, 88vw);
+    aspect-ratio: 4 / 5;
+    border-radius: 22px;
+    box-shadow: 0 25px 60px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.06);
+    overflow:hidden;
+  }
+
+  /* ---------- the message revealed underneath ---------- */
+  .reveal{
+    position:absolute; inset:0;
+    background:
+      radial-gradient(circle at 50% 75%, #ffd27a 0%, #ff9a56 35%, transparent 60%),
+      linear-gradient(180deg, #ffe9b0 0%, #ffcf8a 40%, #ff9d6c 75%, #ff7a68 100%);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+    padding: 20px;
+    /* hidden by default -- only becomes visible when JS explicitly opens it,
+       so it can never show through before the scratch layer is ready */
+    opacity: 0;
+    transition: opacity .7s ease;
+  }
+  .reveal.show{
+    opacity: 1;
+  }
+
+  .sun{
+    position:absolute;
+    left:50%; bottom:28%;
+    width:120px; height:120px;
+    margin-left:-60px;
+    border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, #fffdf2, #ffd85c 55%, #ffb020 100%);
+    box-shadow: 0 0 60px 20px rgba(255,200,80,.6);
+  }
+  .ray{
+    position:absolute;
+    left:50%; bottom:28%;
+    width:4px; height:70px;
+    margin-left:-2px;
+    background: linear-gradient(180deg, rgba(255,220,120,.8), transparent);
+    transform-origin: bottom center;
+  }
+
+  .reveal h1{
+    position:relative;
+    z-index:2;
+    font-size: 34px;
+    color:#5a2a13;
+    letter-spacing:1px;
+    text-shadow: 0 2px 0 rgba(255,255,255,.35);
+    margin-bottom:8px;
+  }
+  .reveal p{
+    position:relative;
+    z-index:2;
+    font-size:14px;
+    color:#7a3d1e;
+    letter-spacing:3px;
+    text-transform:uppercase;
+  }
+
+  .bird{
+    position:absolute;
+    font-size:20px;
+    opacity:.85;
+    z-index:2;
+  }
+  .bird.b1{ top:16%; left:20%; transform:rotate(-6deg); }
+  .bird.b2{ top:22%; left:32%; transform:rotate(4deg); font-size:14px; }
+  .bird.b3{ top:14%; right:22%; transform:rotate(8deg) scaleX(-1); }
+
+  /* ---------- scratch surface ---------- */
+  canvas{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    cursor: grab;
+    background: #c9a86a; /* solid fallback so nothing shows through before JS paints */
+    display:block;
+  }
+  canvas:active{ cursor: grabbing; }
+
+  .hint{
+    position:absolute;
+    top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    z-index:5;
+    color:rgba(255,255,255,.85);
+    font-size:13px;
+    letter-spacing:3px;
+    text-align:center;
+    pointer-events:none;
+    text-transform:uppercase;
+    opacity:1;
+    transition: opacity .4s ease;
+  }
+  .hint .icon{
+    display:block;
+    font-size:26px;
+    margin-bottom:8px;
+    animation: nudge 1.6s ease-in-out infinite;
+  }
+  @keyframes nudge{
+    0%,100%{ transform: translateX(0) rotate(0deg); }
+    25%{ transform: translateX(-6px) rotate(-8deg); }
+    75%{ transform: translateX(6px) rotate(8deg); }
+  }
+
+  .open-btn{
+    position:absolute;
+    top:50%; left:50%;
+    transform:translate(-50%,-50%) scale(.85);
+    z-index:6;
+    background: linear-gradient(160deg,#fff5e0,#ffdca0);
+    color:#6b3a12;
+    border:none;
+    border-radius:24px;
+    padding:12px 26px;
+    font-family: Georgia, serif;
+    font-size:13px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    cursor:pointer;
+    box-shadow: 0 8px 24px rgba(0,0,0,.35);
+    opacity:0;
+    pointer-events:none;
+    transition: opacity .35s ease, transform .35s ease;
+  }
+  .open-btn.show{
+    opacity:1;
+    pointer-events:auto;
+    transform:translate(-50%,-50%) scale(1);
+    animation: pulseBtn 1.6s ease-in-out infinite;
+  }
+  @keyframes pulseBtn{
+    0%,100%{ box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+    50%{ box-shadow: 0 8px 30px rgba(255,210,120,.55); }
+  }
+
+  .replay{
+    position:absolute;
+    bottom:16px; left:50%;
+    transform:translateX(-50%);
+    z-index:6;
+    background: rgba(255,255,255,.15);
+    color:#fff;
+    border:1px solid rgba(255,255,255,.4);
+    border-radius:20px;
+    padding:8px 18px;
+    font-family: Georgia, serif;
+    font-size:12px;
+    letter-spacing:2px;
+    cursor:pointer;
+    opacity:0;
+    pointer-events:none;
+    transition: opacity .4s ease;
+    backdrop-filter: blur(4px);
+  }
+  .replay.show{
+    opacity:1;
+    pointer-events:auto;
+  }
+</style>
+</head>
+<body>
+
+<div class="card-wrap" id="cardWrap">
+
+  <div class="reveal">
+    <div class="sun"></div>
+    <div class="ray" style="transform:rotate(-40deg)"></div>
+    <div class="ray" style="transform:rotate(-20deg)"></div>
+    <div class="ray" style="transform:rotate(0deg)"></div>
+    <div class="ray" style="transform:rotate(20deg)"></div>
+    <div class="ray" style="transform:rotate(40deg)"></div>
+    <div class="bird b1">&#8963;</div>
+    <div class="bird b2">&#8963;</div>
+    <div class="bird b3">&#8963;</div>
+    <h1>Good Morning</h1>
+    <p>Have a wonderful day!</p>
+  </div>
+
+  <canvas id="scratchCanvas"></canvas>
+
+  <div class="hint" id="hint">
+    <span class="icon">&#9986;</span>
+    scratch to reveal
+  </div>
+
+  <button class="open-btn" id="openBtn">tap to open</button>
+
+</div>
+
+<button class="replay" id="replayBtn">scratch again</button>
+
+<script>
+const wrap = document.getElementById('cardWrap');
+const canvas = document.getElementById('scratchCanvas');
+const ctx = canvas.getContext('2d');
+const hint = document.getElementById('hint');
+const replayBtn = document.getElementById('replayBtn');
+const openBtn = document.getElementById('openBtn');
+const revealLayer = document.querySelector('.reveal');
+
+let isDown = false;
+let revealed = false;
+let promptShown = false;
+
+function sizeCanvas(){
+  const rect = wrap.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+  paintScratchLayer();
+}
+
+function paintScratchLayer(){
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  ctx.globalCompositeOperation = 'source-over';
+
+  const grad = ctx.createLinearGradient(0, 0, w, h);
+  grad.addColorStop(0, '#c9a86a');
+  grad.addColorStop(0.5, '#e8d3a0');
+  grad.addColorStop(1, '#b8905a');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.strokeStyle = 'rgba(255,255,255,.08)';
+  ctx.lineWidth = 2;
+  for (let i = -h; i < w; i += 8) {
+    ctx.beginPath();
+    ctx.moveTo(i, 0);
+    ctx.lineTo(i + h, h);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = 'rgba(90,55,20,.55)';
+  ctx.font = '600 15px Georgia, serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('✦ SCRATCH ME ✦', w / 2, h / 2);
+
+  revealed = false;
+  promptShown = false;
+  hint.style.opacity = '1';
+  openBtn.classList.remove('show');
+  replayBtn.classList.remove('show');
+  canvas.style.transition = 'none';
+  canvas.style.opacity = '1';
+  canvas.style.pointerEvents = 'auto';
+}
+
+function getPos(e){
+  const rect = canvas.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return { x: clientX - rect.left, y: clientY - rect.top };
+}
+
+function scratchAt(x, y){
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.beginPath();
+  ctx.arc(x, y, 26, 0, Math.PI * 2);
+  ctx.fill();
+  hint.style.opacity = '0';
+}
+
+function checkProgress(){
+  const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  let cleared = 0;
+  let sampled = 0;
+  for (let i = 3; i < data.length; i += 4 * 4) {
+    sampled++;
+    if (data[i] === 0) cleared++;
+  }
+  const pct = cleared / sampled;
+  // once enough is scratched away, invite the user to tap and fully open it
+  if (pct > 0.4 && !promptShown && !revealed) {
+    promptShown = true;
+    openBtn.classList.add('show');
+  }
+}
+
+let moveCount = 0;
+function handleMove(e){
+  if (!isDown || revealed) return;
+  e.preventDefault();
+  const pos = getPos(e);
+  scratchAt(pos.x, pos.y);
+  moveCount++;
+  if (moveCount % 6 === 0) checkProgress();
+}
+
+canvas.addEventListener('mousedown', (e) => { isDown = true; handleMove(e); });
+canvas.addEventListener('mousemove', handleMove);
+window.addEventListener('mouseup', () => { isDown = false; checkProgress(); });
+
+canvas.addEventListener('touchstart', (e) => { isDown = true; handleMove(e); }, { passive:false });
+canvas.addEventListener('touchmove', handleMove, { passive:false });
+window.addEventListener('touchend', () => { isDown = false; checkProgress(); });
+
+openBtn.addEventListener('click', () => {
+  revealed = true;
+  openBtn.classList.remove('show');
+  revealLayer.classList.add('show');           // fade the message IN
+  canvas.style.transition = 'opacity .7s ease, transform .7s ease';
+  canvas.style.opacity = '0';
+  canvas.style.transform = 'scale(1.05)';
+  canvas.style.pointerEvents = 'none';
+  setTimeout(() => replayBtn.classList.add('show'), 500);
+});
+
+replayBtn.addEventListener('click', () => {
+  revealLayer.classList.remove('show');         // hide the message again
+  canvas.style.transform = 'scale(1)';
+  paintScratchLayer();
+});
+
+window.addEventListener('resize', sizeCanvas);
+sizeCanvas();
+</script>
+
+</body>
+</html>
