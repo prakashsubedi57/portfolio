@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rose Bloom</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:100%; height:100%; overflow:hidden; }
+  body{
+    font-family: Georgia, serif;
+    background:
+      radial-gradient(circle at 50% 35%, #7c1234 0%, transparent 40%),
+      linear-gradient(135deg, #26030f, #4d071d, #21020c);
+    display:flex; justify-content:center; align-items:center;
+  }
+
+  .scene{ position:relative; width:min(900px,100vw); height:100vh; }
+
+  /* ---------- stem + leaves ---------- */
+  .stem{
+    position:absolute; left:50%; bottom:0;
+    width:14px; height:280px;
+    background:linear-gradient(90deg,#163b0b,#4f7d17,#193c0c);
+    border-radius:100px;
+    transform:translateX(-50%) scaleY(0);
+    transform-origin:bottom center;
+  }
+  .scene.playing .stem{
+    animation: stemGrow 1.2s cubic-bezier(.2,.8,.2,1) .1s forwards;
+  }
+  @keyframes stemGrow{
+    0%{ transform:translateX(-50%) scaleY(0); }
+    100%{ transform:translateX(-50%) scaleY(1); }
+  }
+
+  .leaf{
+    position:absolute;
+    width:80px; height:38px;
+    background:linear-gradient(135deg,#789b2b,#345f10 60%,#173806);
+    border-radius:100% 0 100% 0;
+    opacity:0; transform-origin:bottom left; transform:scale(0) rotate(0deg);
+  }
+  .leaf.left{ left:calc(50% - 65px); bottom:120px; }
+  .leaf.right{ left:calc(50% + 5px); bottom:90px; transform-origin:bottom right; }
+  .scene.playing .leaf.left{ animation:leafGrow .7s ease 1.1s forwards; }
+  .scene.playing .leaf.right{ animation:leafGrowR .7s ease 1.25s forwards; }
+  @keyframes leafGrow{ to{ opacity:1; transform:rotate(-30deg) scale(1);} }
+  @keyframes leafGrowR{ to{ opacity:1; transform:rotate(30deg) scale(1);} }
+
+  /* ---------- rose ---------- */
+  .rose{
+    position:absolute;
+    left:50%; bottom:260px;
+    width:260px; height:260px;
+    transform:translate(-50%, 40%) scale(.2);
+    transform-origin:center bottom;
+    opacity:0;
+  }
+  .scene.playing .rose{
+    animation: rosePop 1.1s cubic-bezier(.34,1.4,.4,1) .9s forwards;
+  }
+  @keyframes rosePop{
+    0%{ opacity:0; transform:translate(-50%,40%) scale(.15) rotate(-6deg); }
+    50%{ opacity:1; }
+    100%{ opacity:1; transform:translate(-50%,0) scale(1) rotate(0deg); }
+  }
+
+  .petal-ring{
+    position:absolute; inset:0;
+  }
+  .petal{
+    position:absolute;
+    left:50%; top:50%;
+    width: var(--w); height: var(--h);
+    margin-left: calc(var(--w) / -2);
+    margin-top: calc(var(--h) / -1);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    background: linear-gradient(200deg, #ff7a86 0%, #e2233f 35%, #a5001f 70%, #4c0010 100%);
+    box-shadow:
+      inset 6px 6px 10px rgba(255,170,180,.35),
+      inset -10px -12px 14px rgba(40,0,8,.55);
+    transform-origin: 50% 100%;
+    transform: rotate(var(--angle)) translateY(var(--out)) scale(0);
+    opacity:0;
+  }
+  .scene.playing .petal{
+    animation: petalOpen .6s cubic-bezier(.2,.8,.2,1) forwards;
+    animation-delay: var(--delay);
+  }
+  @keyframes petalOpen{
+    0%{ opacity:0; transform: rotate(var(--angle)) translateY(calc(var(--out) + 10px)) scale(.3); }
+    60%{ opacity:1; }
+    100%{ opacity:1; transform: rotate(var(--angle)) translateY(var(--out)) scale(1); }
+  }
+
+  .bud{
+    position:absolute; left:50%; top:44%;
+    width:34px; height:44px;
+    margin-left:-17px; margin-top:-22px;
+    border-radius:50% 50% 50% 50% / 65% 65% 35% 35%;
+    background: linear-gradient(200deg,#ff8f96,#c8102e 60%,#5c0013);
+    box-shadow: inset 3px 3px 6px rgba(255,255,255,.25);
+    transform: rotate(-10deg) scale(0);
+    opacity:0;
+  }
+  .scene.playing .bud{
+    animation: budOpen .5s ease .95s forwards;
+  }
+  @keyframes budOpen{ to{ opacity:1; transform:rotate(-10deg) scale(1); } }
+
+  .message{
+    position:absolute; bottom:30px; left:50%;
+    transform:translate(-50%,20px);
+    color:rgba(255,255,255,.8);
+    font-size:14px; letter-spacing:4px;
+    opacity:0;
+    white-space:nowrap;
+  }
+  .scene.playing .message{
+    animation: msgIn 1s ease 2s forwards;
+  }
+  @keyframes msgIn{ to{ opacity:1; transform:translate(-50%,0); } }
+
+  /* ---------- envelope / popup overlay ---------- */
+  .overlay{
+    position:fixed; inset:0;
+    display:flex; justify-content:center; align-items:center;
+    background:
+      radial-gradient(circle at 50% 35%, #7c1234 0%, transparent 40%),
+      linear-gradient(135deg, #26030f, #4d071d, #21020c);
+    z-index:100;
+    transition: opacity .6s ease, visibility .6s ease;
+  }
+  .overlay.hidden{
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+  }
+
+  .envelope{
+    position:relative;
+    width:220px; height:150px;
+    cursor:pointer;
+    animation: floatCard 3s ease-in-out infinite;
+  }
+  @keyframes floatCard{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(-8px); }
+  }
+
+  .envelope-body{
+    position:absolute; inset:0;
+    background: linear-gradient(160deg,#fff5f6,#ffe3e7);
+    border-radius:8px;
+    box-shadow:
+      0 10px 30px rgba(0,0,0,.45),
+      inset 0 0 0 1px rgba(255,255,255,.6);
+  }
+  .envelope-flap{
+    position:absolute;
+    top:0; left:0; right:0;
+    height:0;
+    border-left:110px solid transparent;
+    border-right:110px solid transparent;
+    border-top:75px solid #ffd4da;
+    transform-origin:top center;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,.25));
+  }
+  .envelope-seal{
+    position:absolute;
+    left:50%; top:58px;
+    width:34px; height:34px;
+    margin-left:-17px;
+    border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, #ff5a6c, #a5001f 70%, #5c0013);
+    box-shadow: 0 3px 8px rgba(0,0,0,.4), inset 2px 2px 4px rgba(255,255,255,.3);
+    display:flex; align-items:center; justify-content:center;
+    color:#ffe3e7; font-size:16px;
+  }
+
+  .popup-text{
+    position:absolute;
+    bottom:-46px; left:50%;
+    transform:translateX(-50%);
+    color:rgba(255,255,255,.85);
+    font-size:14px;
+    letter-spacing:3px;
+    white-space:nowrap;
+    text-align:center;
+  }
+  .popup-sub{
+    position:absolute;
+    bottom:-70px; left:50%;
+    transform:translateX(-50%);
+    color:rgba(255,255,255,.5);
+    font-size:11px;
+    letter-spacing:2px;
+    white-space:nowrap;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     POPUP OVERLAY — shown first, click/tap the envelope to reveal
+============================================================ -->
+<div class="overlay" id="overlay">
+  <div class="envelope" id="envelope">
+    <div class="envelope-body"></div>
+    <div class="envelope-flap"></div>
+    <div class="envelope-seal">&#9825;</div>
+    <div class="popup-text">SOMETHING FOR YOU</div>
+    <div class="popup-sub">tap to open</div>
+  </div>
+</div>
+
+<div class="scene">
+  <div class="stem"></div>
+  <div class="leaf left"></div>
+  <div class="leaf right"></div>
+
+  <div class="rose" id="rose">
+    <!-- petals generated by JS below in rings, outer to inner -->
+    <div class="bud"></div>
+  </div>
+
+  <div class="message">FOR YOU</div>
+</div>
+
+<script>
+/* ============================================================
+   Build a spiral rose out of layered, rotated petals.
+   Outer rings: bigger petals, further out, opens first (later delay actually last visually since drawn under? we control z via ring order)
+   We draw INNER rings first (smallest, on top... no) -- roses look right when
+   outer petals are BEHIND inner ones visually but open LAST in real blooms.
+   Here for a nice look: outer ring petals are drawn first (so they sit behind),
+   inner rings drawn after (on top), and animate open in sequence outer->inner.
+============================================================ */
+
+const rose = document.getElementById('rose');
+
+// rings from outside (large, wide open) to inside (small, upright)
+const rings = [
+  { count: 6, w: 130, h: 150, out: -18, tiltBase: 0,  delayBase: 0.15, delayStep: 0.03 }, // outermost, most flared
+  { count: 5, w: 105, h: 125, out: -10, tiltBase: 36, delayBase: 0.35, delayStep: 0.03 },
+  { count: 5, w: 82,  h: 100, out: -2,  tiltBase: 0,  delayBase: 0.55, delayStep: 0.03 },
+  { count: 4, w: 60,  h: 78,  out: 6,   tiltBase: 45, delayBase: 0.75, delayStep: 0.03 },
+];
+
+rings.forEach(ring => {
+  const step = 360 / ring.count;
+  for (let i = 0; i < ring.count; i++) {
+    const petal = document.createElement('div');
+    petal.className = 'petal';
+    const angle = ring.tiltBase + step * i;
+    petal.style.setProperty('--w', ring.w + 'px');
+    petal.style.setProperty('--h', ring.h + 'px');
+    petal.style.setProperty('--angle', angle + 'deg');
+    petal.style.setProperty('--out', ring.out + 'px');
+    petal.style.setProperty('--delay', (ring.delayBase + i * ring.delayStep) + 's');
+    rose.insertBefore(petal, rose.firstChild); // keep bud on top... actually append before bud
+  }
+});
+// Move bud to the very end so it renders on top of all petal rings
+rose.appendChild(document.querySelector('.bud'));
+
+/* ---------- envelope open -> start bloom ---------- */
+const overlay = document.getElementById('overlay');
+const envelope = document.getElementById('envelope');
+const scene = document.querySelector('.scene');
+let started = false;
+
+function openEnvelope(){
+  if (started) return;
+  started = true;
+  overlay.classList.add('hidden');
+  scene.classList.add('playing');
+}
+envelope.addEventListener('click', openEnvelope);
+
+/* ---------- replay bloom on click (once opened) ---------- */
+function replay(){
+  if (!started) return;
+  const els = document.querySelectorAll('.stem, .leaf, .rose, .petal, .bud, .message');
+  els.forEach(el => {
+    el.style.animation = 'none';
+    void el.offsetWidth;
+    el.style.animation = '';
+  });
+}
+document.addEventListener('click', (e) => {
+  if (e.target === envelope || envelope.contains(e.target)) return;
+  replay();
+});
+setInterval(replay, 10000);
+</script>
+
+</body>
+</html>
